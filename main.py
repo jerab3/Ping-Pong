@@ -1,12 +1,15 @@
 from pygame import *
-
+import random
 ##Proměnné okna
 win_heigth = 500
 win_width = 800
 
+#Ball
+ballMaxSpeed = 5
 #Proměnné herní smyčky
 isGameRunning = True
 isGameFinished = False
+leftWon = None
 
 #FPS proměnné
 clock = time.Clock()
@@ -45,6 +48,20 @@ class Player(GameSprite):
                 self.rect.y -= self.speed
             elif keys[K_DOWN] and self.rect.y < win_heigth - self.size_y:
                 self.rect.y += self.speed
+
+class Ball(GameSprite):
+    def __init__(self, sprite, position_x, position_y, size_x, size_y,speed,x_speed, y_speed):
+        super().__init__(sprite, position_x, position_y, size_x, size_y, speed)
+        self.x_speed = x_speed
+        self.y_speed = y_speed
+
+    def handleMovement(self):
+        if(self.rect.y <=0):
+            self.y_speed *=-1
+        if(self.rect.y > win_heigth-self.size_y):
+            self.y_speed *=-1
+        self.rect.y += self.y_speed
+        self.rect.x += self.x_speed
 #Okno
 window = display.set_mode((win_width,win_heigth))
 display.set_caption("Ping Pong")
@@ -59,6 +76,20 @@ backgroundImage = transform.scale(
 leftPlayer = Player("Assets/player.png",10,win_heigth/2-50,20,100,8,True)
 rightPlayer = Player("Assets/player.png",win_width-30,win_heigth/2-50,20,100,8,False)
 
+randomX = 0
+randomY = 0
+while randomX == 0 or randomY == 0:
+    randomX = random.randint(ballMaxSpeed*-1,ballMaxSpeed)
+    randomY = random.randint(ballMaxSpeed*-1,ballMaxSpeed)
+
+ball = Ball("Assets/ball.png", win_width/2-10,win_heigth/2-10,20,20,1,randomX,randomY)
+
+font.init()
+font = font.Font(None,50)
+left_win = font.render("LEFT PLAYER WON!", True, (0,255,0))
+left_win_rect = left_win.get_rect(center=(win_width/2, win_heigth/2))
+right_win = font.render("RIGHT PLAYER WON!", True, (0,255,0))
+right_win_rect = right_win.get_rect(center=(win_width/2, win_heigth/2))
 #Herní smyčka
 while isGameRunning:
 
@@ -76,11 +107,28 @@ while isGameRunning:
         #Zobrazeni
         leftPlayer.displaySprite()
         rightPlayer.displaySprite()
+        ball.displaySprite()
         #Pohyb
         leftPlayer.handleMovement()
         rightPlayer.handleMovement()
+        ball.handleMovement()
 
+        if sprite.collide_rect(leftPlayer, ball) or sprite.collide_rect(rightPlayer,ball):
+            ball.x_speed *= -1
 
+        if(ball.rect.x <= 0):
+            isGameFinished = True
+            leftWon = False
+        elif ball.rect.x > win_width-ball.size_x:
+            isGameFinished = True
+            leftWon = True
+            
+
+    else:
+        if leftWon:
+            window.blit(left_win, left_win_rect)
+        else: 
+            window.blit(right_win, right_win_rect)
 
 
     #FPS
