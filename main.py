@@ -5,7 +5,7 @@ win_heigth = 500
 win_width = 800
 
 #Ball
-ballMaxSpeed = 5
+ballMaxSpeed = 2
 #Proměnné herní smyčky
 isGameRunning = True
 isGameFinished = False
@@ -55,13 +55,25 @@ class Ball(GameSprite):
         self.x_speed = x_speed
         self.y_speed = y_speed
 
-    def handleMovement(self):
+    def update(self):
+        global win_width
+        global isGameFinished
+        global isGameRunning
+        global leftWon
+
         if(self.rect.y <=0):
             self.y_speed *=-1
         if(self.rect.y > win_heigth-self.size_y):
             self.y_speed *=-1
         self.rect.y += self.y_speed
         self.rect.x += self.x_speed
+        
+        if(self.rect.x <= 0):
+            isGameFinished = True
+            leftWon = False
+        elif self.rect.x > win_width-self.size_x:
+            isGameFinished = True
+            leftWon = True
 #Okno
 window = display.set_mode((win_width,win_heigth))
 display.set_caption("Ping Pong")
@@ -76,14 +88,19 @@ backgroundImage = transform.scale(
 leftPlayer = Player("Assets/player.png",10,win_heigth/2-50,20,100,8,True)
 rightPlayer = Player("Assets/player.png",win_width-30,win_heigth/2-50,20,100,8,False)
 
+balls = sprite.Group()
 randomX = 0
 randomY = 0
 while randomX == 0 or randomY == 0:
     randomX = random.randint(ballMaxSpeed*-1,ballMaxSpeed)
     randomY = random.randint(ballMaxSpeed*-1,ballMaxSpeed)
 
-ball = Ball("Assets/ball.png", win_width/2-10,win_heigth/2-10,20,20,1,randomX,randomY)
+randomX*=2
+randomY*=2
 
+
+ball = Ball("Assets/ball.png", win_width/2-10,win_heigth/2-10,20,20,1,randomX,randomY)
+balls.add(ball)
 font.init()
 font = font.Font(None,50)
 left_win = font.render("LEFT PLAYER WON!", True, (0,255,0))
@@ -107,22 +124,29 @@ while isGameRunning:
         #Zobrazeni
         leftPlayer.displaySprite()
         rightPlayer.displaySprite()
-        ball.displaySprite()
+        balls.draw(window)
         #Pohyb
         leftPlayer.handleMovement()
         rightPlayer.handleMovement()
-        ball.handleMovement()
+        balls.update()
 
         if sprite.collide_rect(leftPlayer, ball) or sprite.collide_rect(rightPlayer,ball):
             ball.x_speed *= -1
+            chanceToMultiply = random.randint(1,2)
+            if(chanceToMultiply == 1):
+                randomX = 0
+                randomY = 0
+                while randomX == 0 or randomY == 0:
+                    randomX = random.randint(ballMaxSpeed*-1,ballMaxSpeed)
+                    randomY = random.randint(ballMaxSpeed*-1,ballMaxSpeed)
 
-        if(ball.rect.x <= 0):
-            isGameFinished = True
-            leftWon = False
-        elif ball.rect.x > win_width-ball.size_x:
-            isGameFinished = True
-            leftWon = True
-            
+                randomX*=2
+                randomY*=2
+
+
+                ball = Ball("Assets/ball.png", win_width/2-10,win_heigth/2-10,20,20,1,randomX,randomY)
+                balls.add(ball)
+         
 
     else:
         if leftWon:
